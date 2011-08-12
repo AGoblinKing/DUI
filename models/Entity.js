@@ -2,8 +2,9 @@ var Consumable = def({
     update: function(callback) {
         callback(this.client);  
     },
-    get client: function() {
-        return _({'update':'update'}).extend(_(this.clients).map(function(val, key, this) {
+    get client() {
+        return {'update':'update'};
+        return _({'update':'update'}).extend(_(this.clients).map(function(val, key) {
             return this[val];
         }));
     },
@@ -23,7 +24,7 @@ var Entity = def({
 var Collection = def({
     mixins: [Consumable],
     items: [],
-    get citems: function() {
+    get citems() {
         return _(this.items).map(function(val) {
             return val.client;
         });
@@ -35,7 +36,7 @@ var Collection = def({
 });
 
 
-exports = {
+module.exports = {
     "Consumable": Consumable,
     "Vector": Vector,
     "Entity": Entity,

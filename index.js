@@ -11,6 +11,7 @@ var group = new Collection({
    items: [new Entity()]
 });
 
+console.log(group.client);
 var server = dnode(group.client);
 
 server.listen(app);
