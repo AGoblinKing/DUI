@@ -1,15 +1,292 @@
+<!doctype html>
 <html>
-<head>
-<script src="/dnode.js" type="text/javascript"></script>
-<script type="text/javascript">
-    window.onload = function () {
-        DNode.connect(function (remote) {
-            console.log(remote);
-        });
-    };
-</script>
-</head>
-<body>
+    <head>
+        <title>Disgaea</title>
+        <style type="text/css">
+            body {
+                padding: 0px;
+                margin: 0px;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container"></div>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js"></script>
+        <script type="text/javascript" src="lib/Three.js"></script>
+        <script type="text/javascript" src="lib/underscore.js"></script>
+        <script type="text/javascript" src="lib/base.js"></script>
+        <script type="text/javascript" src="lib/RequestAnimationFrame.js"></script>
+        <script type="text/javascript">
 
-</body>
+            function init() {
+                var $container = $("#container");
+                Game.scene = new GameScene();
+                $container.append(Game.domElement);
+                Game.start();
+            }
+
+            var config = {
+                viewAngle: 45,
+                aspectRatio: window.innerWidth/window.innerHeight,
+                near: 0.1,
+                far: 10000
+            };
+
+            function loadSpriteMap(path, dimensions, callback) {
+                var spriteTextures = [];
+                var image = new Image();
+                image.onload = function() {
+                    for(var y = 0; y < image.height; y += dimensions.y) {
+                        for(var x = 0; x < image.width; x += dimensions.x) {
+                            var tmp = $('<canvas/>')[0];
+                            var ctx = tmp.getContext('2d');
+                            tmp.width = dimensions.x;
+                            tmp.height = dimensions.y;
+                            ctx.drawImage(image, x, y, dimensions.x, dimensions.y);
+                            var img = $('<img/>')[0];
+                            img.src = tmp.toDataURL();
+                            spriteTextures.push(new THREE.Texture(img));
+                        }
+                    }
+                    if(callback) callback(spriteTextures);
+                };
+                image.src = path;
+            }
+
+            var materials = {
+                outline: new THREE.MeshPhongMaterial({
+                    color: 0x000000,
+                    vertexColors: true,
+                    wireframe: true,
+                    wireframeLinewidth: 100
+                }),
+                solid: new THREE.MeshLambertMaterial({
+                    color: 0xCC0000
+                })
+            };
+
+
+            var Cube = def({
+                extend: THREE.Object3D,
+                init: function(config) {
+                    THREE.Object3D.call(this);
+                    this.mesh = new THREE.Mesh(new THREE.CubeGeometry(config.cubeWidth, config.cubeWidth, config.cubeWidth), new THREE.MeshBasicMaterial({map: textures[1]}));
+                    this.addChild(this.mesh);
+
+                    this.mesh.mouseover = function(iter) {
+                        if(iter == 0) this.materials[0].color = 0x000000;
+                    }
+                    this.mesh.mouseout = function(iter) {
+                        this.materials[0].color = 0xFFFFFF;
+                    }
+                }
+            });
+
+            var World = def({
+                extend: THREE.Object3D,
+                init: function(config) {
+                    THREE.Object3D.call(this, config);
+                    this.cubeWidth = 50;
+                    this.cubeX = 10;
+                    this.cubeY = 10;
+                    this.generate();
+                },
+                map: {},
+                generate: function() {
+                    var mats = [
+                        textures.terrain[3],
+                        textures.terrain[3],
+                        textures.terrain[0],
+                        textures.terrain[1],
+                        textures.terrain[3],
+                        textures.terrain[3]
+                    ];
+                    for(var x = 0; x < this.cubeX; x++) {
+                        this.map[x] = {};
+                        for(var y = 0; y < this.cubeY; y++) {
+                            this.map[x][y] = {};
+                            //var obj = new THREE.Mesh(new THREE.CubeGeometry(this.cubeWidth, this.cubeWidth, this.cubeWidth), [materials.solid, materials.outline]);
+                            var obj = new Cube({cubeWidth: this.cubeWidth, mats: mats});
+                            obj.position = new THREE.Vector3(x*this.cubeWidth, 0, y*this.cubeWidth);
+                            this.addChild(obj);
+                            this.map[x][y][0] = obj;
+                        }
+                    }
+                }
+            });
+
+            var FixedCamera = def({
+                extend: THREE.Camera,
+                init: function(options) {
+                    THREE.Camera.call(this, config.viewAngle, config.aspectRatio, config.near, config.far);
+                    if(options){
+                        this.zoom = options.zoom === undefined ? this.zoom : options.zoom;
+                        this.angle = options.angle === undefined ? this.angle : options.angle;
+                    }
+                    this.resetCamera();
+                },
+                zoom: 300,
+                angle: {
+                    x: 45,
+                    y: 45
+                },
+                setAngle: function(amount) {
+                    this.angle = amount;
+                    this.resetCamera();
+                },
+                resetCamera: function() {
+                    this.position.x  = this.target.position.x + Math.cos(this.angle.x)*this.zoom;
+                    this.position.z  = this.target.position.z + Math.cos(this.angle.x)*this.zoom;
+                    this.position.y  = this.target.position.y + Math.sin(this.angle.y)*this.zoom;
+                },
+                setZoom: function(amount) {
+                    this.zoom = amount;
+                    this.resetCamera();
+                },
+                update: function(parentMatrixWorld, forceUpdate, camera) {
+                    var x=0, z=0;
+                    if(Game.keys['W'] == true) {
+                        x -= 1;
+                    }
+                    if(Game.keys['S'] == true) {
+                        x += 1;
+                    }
+                    if(Game.keys['A'] == true) {
+                        z += 1;
+                    }
+                    if(Game.keys['D'] == true) {
+                        z -= 1;
+                    }
+                    
+                    var xnew = x * Math.cos(this.angle) - z * Math.sin(this.angle)
+                    var znew = z * Math.cos(this.angle) + x * Math.sin(this.angle)
+                    this.target.position.x += xnew;
+                    this.position.x +=xnew;
+                    this.target.position.z += znew;
+                    this.position.z += znew;
+                    THREE.Camera.prototype.update.call(this, parentMatrixWorld, forceUpdate, camera);
+                }
+            });
+
+            var ThirdPersonCamera = def({
+                extend: THREE.Camera,
+                init: function(options) {
+                    THREE.Camera.call(this, config.viewAngle, config.aspectRatio, config.near, config.far);
+                    this.position.z = 300;
+                    this.zoom = 300;
+                    this.lat = 0;
+                    this.lon = 0;
+                    this.rotSpeed = .01;
+                    this.mouse = new THREE.Vector2(-1, -1);
+                },
+                update: function(parentMatrixWorld, forceUpdate, camera) {
+                    if(this.mouse.x != -1) {
+                        this.lon += (Game.mouse.x - window.innerWidth/2)*this.rotSpeed;
+                        this.lat += (Game.mouse.y - window.innerHeight/2)*this.rotSpeed;
+                    }
+                    this.lat = Math.max(-85,Math.min(85,this.lat));
+                    this.phi = (90-this.lat)*Math.PI/180;
+                    this.theta=this.lon*Math.PI/180;
+
+                    this.position.x=this.zoom*(Math.sin(this.phi)*Math.cos(this.theta))+this.target.position.x;
+                    this.position.y=this.zoom*Math.cos(this.phi)+this.target.position.y;
+                    this.position.z = this.zoom*(Math.sin(this.phi)*Math.sin(this.theta))+this.target.position.z;
+                    this.mouse.x = Game.mouse.x;
+                    this.mouse.y = Game.mouse.y;
+                    THREE.Camera.prototype.update.call(this, parentMatrixWorld, forceUpdate, camera);
+                }
+            });
+
+            var Keyboard = def({
+                init: function() {
+                    var self = this;
+                    $(window).bind('keydown', function(e) {
+                        if(!self.disabled) {
+                            self[String.fromCharCode(e.which)] = true;
+                            self[e.which] = true;
+                        }
+                    });
+                    $(window).bind('keyup', function(e) {
+                        self[String.fromCharCode(e.which)] = undefined;
+                        self[e.which] = undefined;
+                    });
+                },
+                disabled: false
+            });
+            
+            var Mouse = def({
+                extend: THREE.Vector2,
+                init: function() {
+                    THREE.Vector2.call(this, 0, 100000);
+                    var self = this;
+                    $(window).bind('mousemove', function(e) {
+                        self.x = e.pageX/window.innerWidth*2-1;
+                        self.y = -e.pageY/window.innerHeight*2+1;
+                    });
+                    $(window).bind('mousedown', function(e) {
+                       self.down = true;
+                    });
+                    $(window).bind('mouseup', function(e){
+                       self.down = false;
+                    });
+                },
+                down: false,
+                intersects: [],
+                projector: new THREE.Projector(),
+                update: function() {
+                    var vector = new THREE.Vector3(this.x, this.y, .5 );
+				    this.projector.unprojectVector(vector, Game.scene.camera );
+				    var ray = new THREE.Ray(Game.scene.camera.position, vector.subSelf( Game.scene.camera.position ).normalize() );
+				    var intersects = ray.intersectScene(Game.scene);
+                    _(_(this.intersects).without(intersects)).each(function(item, iter) {
+                        if(item.object['mouseout']) item.object.mouseout(iter, this);
+                    });
+				    this.intersects = intersects;
+                    _(this.intersects).each(function(item, iter) {
+                        if(item.object['mouseover']) item.object.mouseover(iter, this);
+                    });
+                }
+            });
+            
+            var Game = def({
+                extend: THREE.WebGLRenderer,
+                init: function(config) {
+                    THREE.WebGLRenderer.call(this);
+                    this.updates = [];
+                    this.setSize(window.innerWidth, window.innerHeight);
+                    this.autoClear = false;
+                },
+                keys: new Keyboard(),
+                singleton: true,
+                mouse: new Mouse(),
+                start: function() {
+                    this.date = new Date().getTime();
+                    var self = this;
+                    //blearg only way I can use requestAnimationFrame
+                    var update = function() {
+                        var tmp = self.date;
+                        self.date = new Date().getTime();
+                        requestAnimationFrame(update, self.domElement);
+                        self.delta = self.date - tmp;
+                        self.mouse.update();
+                        self.clear();
+                        if(self.scene.skyCamera)self.render(self.scene.skyScene, self.scene.skyCamera);
+                        self.render(self.scene, self.scene.camera);
+                    }
+                    update();
+                }
+            });
+
+            var GameScene = def({
+                extend: THREE.Scene,
+                init: function() {
+                    THREE.Scene.call(this);
+                    this.camera = new FixedCamera();
+                }
+            });
+
+
+        </script>
+    </body>
 </html>
