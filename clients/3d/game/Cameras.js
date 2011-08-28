@@ -2,15 +2,17 @@ def('FixedCamera', {
     extend: THREE.Camera,
     init: function(options) {
         THREE.Camera.call(this, config.viewAngle, config.aspectRatio, config.near, config.far);
+        this.projectionMatrix = THREE.Matrix4.makeOrtho(window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, config.near, config.far);
         if(options){
             this.zoom = options.zoom === undefined ? this.zoom : options.zoom;
             this.angle = options.angle === undefined ? this.angle : options.angle;
         }
         this.resetCamera();
     },
-    zoom: 300,
+    zoom: 10,
     angle: {
         x: 45,
+        z: 45,
         y: 45
     },
     setAngle: function(amount) {
@@ -19,7 +21,7 @@ def('FixedCamera', {
     },
     resetCamera: function() {
         this.position.x  = this.target.position.x + Math.cos(this.angle.x)*this.zoom;
-        this.position.z  = this.target.position.z + Math.cos(this.angle.x)*this.zoom;
+        this.position.z  = this.target.position.z + Math.cos(this.angle.z)*this.zoom;
         this.position.y  = this.target.position.y + Math.sin(this.angle.y)*this.zoom;
     },
     setZoom: function(amount) {
@@ -41,8 +43,8 @@ def('FixedCamera', {
             z -= 1;
         }
         
-        var xnew = x * Math.cos(this.angle) - z * Math.sin(this.angle)
-        var znew = z * Math.cos(this.angle) + x * Math.sin(this.angle)
+        var xnew = x * Math.cos(this.angle.x) - z * Math.sin(this.angle.x)
+        var znew = z * Math.cos(this.angle.z) + x * Math.sin(this.angle.z)
         this.target.position.x += xnew;
         this.position.x +=xnew;
         this.target.position.z += znew;
