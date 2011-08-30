@@ -31,8 +31,8 @@ def('Game', {
         _(world.items).each(function(item) {
             switch(item.type) {
                 default: 
-                    item.cubeWidth = 20;
-                    self.scene.addChild(new Cube({cubeWidth:20}, false)); 
+                    item.cubeWidth = 100;
+                    self.scene.addChild(new Cube(item)); 
             }
         });
     }

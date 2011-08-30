@@ -1,19 +1,20 @@
 def('FixedCamera', {
     extend: THREE.Camera,
     init: function(options) {
-        THREE.Camera.call(this, config.viewAngle, config.aspectRatio, config.near, config.far);
-        this.projectionMatrix = THREE.Matrix4.makeOrtho(window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, config.near, config.far);
+        THREE.Camera.call(this, config.viewAngle, config.aspectRatio, -config.far, config.far);
+        this.projectionMatrix = THREE.Matrix4.makeOrtho(window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, -config.far, config.far);
         if(options){
             this.zoom = options.zoom === undefined ? this.zoom : options.zoom;
             this.angle = options.angle === undefined ? this.angle : options.angle;
         }
         this.resetCamera();
     },
-    zoom: 10,
+    zoom: 1000,
+    speed: 50,
     angle: {
         x: 45,
         z: 45,
-        y: 45
+        y: -35
     },
     setAngle: function(amount) {
         this.angle = amount;
@@ -43,8 +44,8 @@ def('FixedCamera', {
             z -= 1;
         }
         
-        var xnew = x * Math.cos(this.angle.x) - z * Math.sin(this.angle.x)
-        var znew = z * Math.cos(this.angle.z) + x * Math.sin(this.angle.z)
+        var xnew = x * Math.cos(this.angle.x) - z * Math.sin(this.angle.x)*this.speed;
+        var znew = z * Math.cos(this.angle.z) + x * Math.sin(this.angle.z)*this.speed;
         this.target.position.x += xnew;
         this.position.x +=xnew;
         this.target.position.z += znew;
@@ -71,10 +72,10 @@ def('ThirdPersonCamera', {
         }
         this.lat = Math.max(-85,Math.min(85,this.lat));
         this.phi = (90-this.lat)*Math.PI/180;
-        this.theta=this.lon*Math.PI/180;
+        this.theta = this.lon*Math.PI/180;
 
-        this.position.x=this.zoom*(Math.sin(this.phi)*Math.cos(this.theta))+this.target.position.x;
-        this.position.y=this.zoom*Math.cos(this.phi)+this.target.position.y;
+        this.position.x = this.zoom*(Math.sin(this.phi)*Math.cos(this.theta))+this.target.position.x;
+        this.position.y = this.zoom*Math.cos(this.phi)+this.target.position.y;
         this.position.z = this.zoom*(Math.sin(this.phi)*Math.sin(this.theta))+this.target.position.z;
         this.mouse.x = Game.mouse.x;
         this.mouse.y = Game.mouse.y;

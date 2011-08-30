@@ -1,52 +1,50 @@
-var Consumable = def({
+def('DUI.Consumable', {
     update: function(callback) {
-        callback(this.client);  
+        callback(this.client());
     },
-    get client() {
-        return {'update':'update'};
-        return _({'update':'update'}).extend(_(this.clients).map(function(val, key) {
-            return this[val];
-        }));
+    beforeClient: function(){},
+    client: function() {
+        this.beforeClient();
+        var self = this,
+            tmp = {};
+        _(this.clients).each(function(val, key) {
+            if(_(self[val]).isFunction()) {
+                tmp[key] = self[val]();
+            } else {
+                tmp[key] = self[val];
+            }
+        });
+        return _({'update':this['update']}).extend(tmp);
     },
-    clients: [] 
+    clients: {}
 });
 
-var Vector = def({
+def('DUI.Vector', {
     x: 0,
     y: 0
 });
 
-var Entity = def({
-    mixins: [Vector, Consumable],
-    clients: {'x':'x', 'y':'y'}
+def('DUI.Entity', {
+    mixins: [DUI.Vector, DUI.Consumable],
+    type: 'cube',
+    clients: {'x':'x', 'y':'y', 'type':'type'},
+    update: function(callback, ent) {
+        this.x = ent.x;
+        this.y = ent.y;
+        callback(this.client());
+    }
 });
 
-var Collection = def({
-    mixins: [Consumable],
+def('DUI.Collection', {
+    mixins: [DUI.Consumable],
     items: [],
-    get citems() {
-        return _(this.items).map(function(val) {
-            return val.client;
-        });
+    citems: function() {
+      return _(this.items).map(function(val) {
+          return val.client();
+       });
     },
-    update: function(callback) {
-       callback(this.items)
+    add: function(item) {
+        this.items.push(item);  
     },
     clients: {'items': 'citems'}
 });
-
-
-module.exports = {
-    "Consumable": Consumable,
-    "Vector": Vector,
-    "Entity": Entity,
-    "Collection": Collection
-};
-
-
-
-
-
-
-
-

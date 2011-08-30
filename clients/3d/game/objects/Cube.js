@@ -5,14 +5,15 @@ def('Cube', {
         this.setProperties(config);
     },
     mouseover: function(iter) {
-        if(iter == 0) this.materials[0].color = 0x000000; 
+        this.oldColor = this.materials[1].color;
+        this.materials[1].color = 0xFFFFFF; 
     },
     mouseout: function(iter) {
-        this.materials[0].color = 0xFFFFFF;
+        this.materials[1].color = this.oldColor;
     },
     setProperties: function(config) {
-        this.position.x = config.x !== undefined ? config.x : 0;
-        this.position.y = config.y !== undefined ? config.y : 0;
+        this.position.x = config.x !== undefined ? config.x * config.cubeWidth : 0;
+        this.position.z = config.y !== undefined ? config.y * config.cubeWidth : 0;
         this.updateFunc = config.update;
     },
     updateProperties: function(config) {
