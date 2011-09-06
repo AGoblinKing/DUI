@@ -13,7 +13,8 @@ def('Cube', {
     },
     setProperties: function(config) {
         this.position.x = config.x !== undefined ? config.x * config.cubeWidth : 0;
-        this.position.z = config.y !== undefined ? config.y * config.cubeWidth : 0;
+        this.position.y = config.y !== undefined ? config.y * config.cubeWidth:0;
+        this.position.z = config.z !== undefined ? config.z * config.cubeWidth : 0;
         this.updateFunc = config.update;
     },
     updateProperties: function(config) {

@@ -13,8 +13,9 @@ var group = new DUI.Collection({
 
 for(var x=0;x<20;x++){
     for(var y=0;y<20;y++){
-        group.add(new DUI.Entity({x:x, y:y}));
+        group.add(new DUI.Entity({x:x, z:y}));
     }
 }
+group.add(new DUI.Entity({x:1, y: 2, z: 3}));
 var server = dnode(group.client());
 server.listen(app);
