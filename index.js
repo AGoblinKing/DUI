@@ -5,7 +5,7 @@ var dnode = require('dnode'),
     
 var app = express.createServer();
 app.use(express.static(__dirname+'/clients'));
-app.listen(process.env.C9_PORT);
+app.listen('8080');
 
 var group = new DUI.Collection({
    items: [new DUI.Entity()]

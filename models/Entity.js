@@ -1,5 +1,5 @@
 def('DUI.Consumable', {
-    update: function(callback) {
+    pull: function(callback) {
         callback(this.client());
     },
     beforeClient: function(){},
@@ -27,9 +27,9 @@ def('DUI.Vector', {
 
 def('DUI.Entity', {
     mixins: [DUI.Vector, DUI.Consumable],
-    type: 'cube',
+    type: 'entity',
     clients: {'x':'x', 'z':'z', 'y':'y', 'type':'type'},
-    update: function(callback, ent) {
+    updateEnt: function(callback, ent) {
         this.x = ent.x;
         this.y = ent.y;
         this.z = ent.z;
