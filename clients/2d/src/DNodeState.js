@@ -15,7 +15,6 @@ def('DUI.State', {
                 default: 
                     item.x = item.x*26;
                     item.y = item.z*26;
-                    console.log(item);
                     var spr = new Jxl.Sprite(item); 
                     spr.border.visible = true;
                     spr.border.color = 0x000;
